@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useRef, useState, type ReactNode } from "react";
 import { CLASSES, WEAPONS } from "@/app/data/poe2";
 import { computeNextRotation, randInt } from "@/app/lib/spin";
+import { useSpinHistory } from "@/app/lib/useSpinHistory";
 import { WheelRing } from "./WheelRing";
 import { Pointer } from "./Pointer";
 import { ResultPanel } from "./ResultPanel";
+import { HistoryButton } from "./HistoryButton";
+import { HistoryPanel } from "./HistoryPanel";
 
 const VIEW_BOX_SIZE = 760;
 const HALF = VIEW_BOX_SIZE / 2;
@@ -33,7 +36,10 @@ export function Roulette(): ReactNode {
   const [spinning, setSpinning] = useState(false);
   const [pendingResult, setPendingResult] = useState<Result | null>(null);
   const [shownResult, setShownResult] = useState<Result | null>(null);
-  const [ringsArrivedCount, setRingsArrivedCount] = useState(0);
+  const ringsArrivedRef = useRef(0);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const { entries, addEntry, clear } = useSpinHistory();
 
   const handleSpin = useCallback(
     (instant: boolean) => {
@@ -61,6 +67,7 @@ export function Roulette(): ReactNode {
         setWeaponRotation(nextWeapon);
         setShownResult(result);
         setPendingResult(null);
+        addEntry(CLASSES[classIndex].id, WEAPONS[weaponIndex].id);
         return;
       }
 
@@ -79,34 +86,44 @@ export function Roulette(): ReactNode {
 
       setShownResult(null);
       setPendingResult(result);
-      setRingsArrivedCount(0);
+      ringsArrivedRef.current = 0;
       setSpinning(true);
       setCurrentDuration(SPIN_DURATION_MS);
       setClassRotation(nextClass);
       setWeaponRotation(nextWeapon);
     },
-    [classRotation, weaponRotation, spinning],
+    [classRotation, weaponRotation, spinning, addEntry],
   );
 
   const handleRingArrived = useCallback(() => {
-    setRingsArrivedCount((prev) => {
-      const next = prev + 1;
-      if (next >= 2) {
-        setSpinning(false);
-        setShownResult(pendingResult);
-        setPendingResult(null);
-      }
-      return next;
-    });
-  }, [pendingResult]);
+    ringsArrivedRef.current += 1;
+    if (ringsArrivedRef.current < 2) return;
+    ringsArrivedRef.current = 0;
+    setSpinning(false);
+    setShownResult(pendingResult);
+    setPendingResult(null);
+    if (pendingResult) {
+      addEntry(
+        CLASSES[pendingResult.classIndex].id,
+        WEAPONS[pendingResult.weaponIndex].id,
+      );
+    }
+  }, [pendingResult, addEntry]);
 
   const resultClass =
-    shownResult !== null ? CLASSES[shownResult.classIndex].label : null;
+    shownResult !== null ? CLASSES[shownResult.classIndex] : null;
   const resultWeapon =
-    shownResult !== null ? WEAPONS[shownResult.weaponIndex].label : null;
+    shownResult !== null ? WEAPONS[shownResult.weaponIndex] : null;
 
   return (
     <div className="flex w-full flex-col items-center gap-6">
+      <HistoryButton onClick={() => setHistoryOpen(true)} count={entries.length} />
+      <HistoryPanel
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        entries={entries}
+        onClear={clear}
+      />
       <div className="relative aspect-square w-full max-w-[min(82vh,760px)]">
         <svg
           viewBox={`0 0 ${VIEW_BOX_SIZE} ${VIEW_BOX_SIZE}`}
@@ -208,7 +225,12 @@ export function Roulette(): ReactNode {
           <span className="leading-none">Aleatório</span>
         </button>
 
-        <ResultPanel className={resultClass} weapon={resultWeapon} />
+        <ResultPanel
+          className={resultClass?.label ?? null}
+          weapon={resultWeapon?.label ?? null}
+          classIconSrc={resultClass?.iconSrc ?? null}
+          weaponIconSrc={resultWeapon?.iconSrc ?? null}
+        />
 
         <button
           type="button"
