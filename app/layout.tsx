@@ -29,7 +29,7 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${cinzel.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0a0604] text-amber-50">
+      <body className="min-h-full flex flex-col text-amber-50">
         {children}
       </body>
     </html>
