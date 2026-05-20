@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Roleta de Builds — Path of Exile 2
 
-## Getting Started
+Aplicativo Next.js de página única que sorteia uma combinação aleatória de **classe + arma** para a sua próxima run de Path of Exile 2. Inspirado no estilo de uma roleta com dois anéis independentes (8 classes no anel interno, 11 armas no anel externo) que giram com easing realista.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router) + **TypeScript** + **Tailwind CSS v4**
+- **Framer Motion** para a animação de giro
+- **Cinzel** (display) + **Inter** (corpo) via `next/font/google`
+
+## Rodar localmente
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abra [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estrutura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `app/page.tsx` — composição da página (cabeçalho + roleta + rodapé).
+- `app/components/Roulette.tsx` — orquestrador do estado de giro.
+- `app/components/WheelRing.tsx` — anel SVG genérico (recebe `items[]` e desenha as fatias).
+- `app/components/Pointer.tsx` — ponteiro dourado no topo (12h).
+- `app/components/ResultPanel.tsx` — rodapé com a combinação sorteada.
+- `app/data/poe2.ts` — dados das 8 classes e 11 armas.
+- `app/lib/spin.ts` — matemática para calcular o ângulo final do giro.
 
-## Learn More
+## Deploy no Vercel
 
-To learn more about Next.js, take a look at the following resources:
+A maneira mais simples:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Faça o push deste repositório para o GitHub (`gh repo create` ou pelo site).
+2. Importe em [vercel.com/new](https://vercel.com/new) — o Vercel detecta Next.js automaticamente e nenhum ajuste é necessário.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Alternativa via CLI:
 
-## Deploy on Vercel
+```bash
+npm i -g vercel
+vercel        # primeira vez (faz login + cria o projeto)
+vercel --prod # promove para produção
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Trocar os ícones por arte real
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Os anéis usam glifos unicode como placeholders. Para usar a arte oficial:
+
+1. Coloque arquivos em `public/poe2/classes/<id>.webp` e `public/poe2/weapons/<id>.webp`.
+2. Em `app/data/poe2.ts`, troque o campo `glyph` por um caminho de imagem ou adicione um campo `iconSrc`.
+3. Em `app/components/WheelRing.tsx`, substitua o `<text>` do glifo por um `<image href={...}>` SVG.
