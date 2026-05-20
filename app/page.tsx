@@ -24,8 +24,17 @@ export default function Home() {
         <Roulette />
       </div>
 
-      <footer className="absolute bottom-3 right-4 text-[10px] uppercase tracking-widest text-stone-600">
-        feito para a próxima run
+      <footer className="mt-8 w-full text-center">
+        <span className="font-serif-display text-sm md:text-base italic tracking-wide text-stone-300 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
+          Feito especialmente para o meu grande amigo,{" "}
+          <span className="font-bold not-italic tracking-wider text-amber-300">
+            Rafael Hikkikomori Sigma
+          </span>
+          , por{" "}
+          <span className="font-bold not-italic tracking-wider text-purple-300">
+            Lisan Al Gaib
+          </span>
+        </span>
       </footer>
     </main>
   );
