@@ -124,7 +124,14 @@ export function WheelRing({
             startAngle,
             endAngle,
           );
-          const flipForReading = midAngle > 90 && midAngle < 270;
+          // Flip the label whenever the slice's CURRENT on-screen position
+          // (midAngle + wheel rotation, normalized to [0, 360)) lies in the
+          // bottom half, otherwise it reads upside-down. Using the natural
+          // midAngle alone would only be correct before the first spin.
+          const effectiveAngle =
+            (((midAngle + rotation) % 360) + 360) % 360;
+          const flipForReading =
+            effectiveAngle > 90 && effectiveAngle < 270;
 
           return (
             <g key={item.id}>
