@@ -2,7 +2,9 @@
 
 Aplicativo Next.js de página única que sorteia uma combinação aleatória de **classe + arma** para a sua próxima run de Path of Exile 2. Inspirado no estilo de uma roleta com dois anéis independentes (8 classes no anel interno, 11 armas no anel externo) que giram com easing realista.
 
-**Demo:** [https://poe2-roulette-kcsvt8oe2-icaros-projects-b7e98c21.vercel.app/](https://poe2-roulette-kcsvt8oe2-icaros-projects-b7e98c21.vercel.app/)
+**Demo:** [https://poe2-roulette.vercel.app/](https://poe2-roulette.vercel.app/)
+
+<img width="1423" height="1231" alt="image" src="https://github.com/user-attachments/assets/fce33bfa-7671-4e88-a3a3-e4875cde5350" />
 
 ## Stack
 
@@ -28,15 +30,3 @@ Abra [http://localhost:3000](http://localhost:3000).
 - `app/components/ResultPanel.tsx` — rodapé com a combinação sorteada.
 - `app/data/poe2.ts` — dados das 8 classes e 11 armas.
 - `app/lib/spin.ts` — matemática para calcular o ângulo final do giro.
-
-## Trocar os ícones por arte real
-
-Os anéis usam glifos unicode como placeholders. Para usar a arte oficial:
-
-1. Coloque arquivos em `public/poe2/classes/<id>.webp` e `public/poe2/weapons/<id>.webp`.
-2. Em `app/data/poe2.ts`, troque o campo `glyph` por um caminho de imagem ou adicione um campo `iconSrc`.
-3. Em `app/components/WheelRing.tsx`, substitua o `<text>` do glifo por um `<image href={...}>` SVG.
-
-## Trocar a imagem de background
-
-A arte de fundo fica em `public/poe2-bg.jpg` e é aplicada no `<body>` via `app/globals.css` (com `background-attachment: fixed` e overlay escuro por cima). Para usar outra imagem, basta substituir o arquivo mantendo o nome, ou apontar a URL em `globals.css`.
