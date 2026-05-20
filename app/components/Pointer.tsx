@@ -1,34 +1,40 @@
 import type { ReactNode } from "react";
 
 type PointerProps = {
-  outerRadius: number;
+  /** Outer radius of the decorative wheel border (the gem sits just above this). */
+  wheelBorderRadius: number;
 };
 
 /**
- * Gold pointer at 12 o'clock that points downward toward the selected slice.
- * Rendered as part of the same SVG so it sits flush with the outer ring.
+ * Indicator at 12 o'clock: a red diamond gem sits on the wheel border with a
+ * gold arrowhead pointing inward toward the selected slice. Both pieces fit
+ * inside the SVG viewBox (unlike the v1 pointer, which got clipped at the top).
  */
-export function Pointer({ outerRadius }: PointerProps): ReactNode {
-  const tipY = -outerRadius + 12;
-  const baseY = -outerRadius - 22;
-  const halfWidth = 14;
+export function Pointer({ wheelBorderRadius }: PointerProps): ReactNode {
+  const gemCenterY = -wheelBorderRadius + 4;
+  const gemHalf = 16;
+  const triBaseY = -wheelBorderRadius + 20;
+  const triTipY = -wheelBorderRadius + 64;
+  const triHalfWidth = 16;
 
   return (
-    <g>
+    <g style={{ filter: "drop-shadow(0 3px 6px rgba(0,0,0,0.7))" }}>
       <polygon
-        points={`-${halfWidth},${baseY} ${halfWidth},${baseY} 0,${tipY}`}
-        fill="#e8c46a"
-        stroke="#3a2a10"
-        strokeWidth={1.5}
-        style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}
+        points={`-${triHalfWidth},${triBaseY} ${triHalfWidth},${triBaseY} 0,${triTipY}`}
+        fill="#f0c560"
+        stroke="#3a2410"
+        strokeWidth={2}
       />
-      <circle
-        cx={0}
-        cy={baseY - 8}
-        r={8}
-        fill="#7a1a12"
-        stroke="#e8c46a"
-        strokeWidth={1.5}
+      <polygon
+        points={`0,${gemCenterY - gemHalf} ${gemHalf - 2},${gemCenterY} 0,${gemCenterY + gemHalf} ${-(gemHalf - 2)},${gemCenterY}`}
+        fill="#8a1612"
+        stroke="#f0c560"
+        strokeWidth={2.5}
+      />
+      <polygon
+        points={`0,${gemCenterY - gemHalf + 4} 6,${gemCenterY - 2} 0,${gemCenterY + 4} -6,${gemCenterY - 2}`}
+        fill="#c4221b"
+        opacity={0.85}
       />
     </g>
   );

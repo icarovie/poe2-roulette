@@ -6,27 +6,26 @@ import type { ReactNode } from "react";
 export type WheelRingItem = {
   id: string;
   label: string;
-  glyph: string;
-  color: string;
+  iconSrc: string;
 };
 
 type WheelRingProps = {
+  ringId: string;
   items: WheelRingItem[];
   innerRadius: number;
   outerRadius: number;
   rotation: number;
-  fontSize: number;
-  glyphSize: number;
+  /** Label font size in SVG units. */
+  labelFontSize: number;
+  /** Distance from the slice's inner edge outward where the label sits, in SVG units. */
+  labelInsetFromInner: number;
   spinDurationMs: number;
   onSpinEnd?: () => void;
 };
 
 /**
  * SVG polar helper: angle is in degrees, 0 = 12 o'clock, clockwise positive.
- *
- * Coordinates are rounded to a fixed precision so SSR and client renders produce
- * the same string (avoids React hydration mismatches caused by tiny float drift
- * between Node and V8/JIT).
+ * Rounded to 3 decimals to keep SSR/CSR identical and avoid hydration mismatches.
  */
 function polar(radius: number, angleDeg: number): { x: string; y: string } {
   const rad = (angleDeg * Math.PI) / 180;
@@ -58,101 +57,150 @@ function annularSectorPath(
 }
 
 export function WheelRing({
+  ringId,
   items,
   innerRadius,
   outerRadius,
   rotation,
-  fontSize,
-  glyphSize,
+  labelFontSize,
+  labelInsetFromInner,
   spinDurationMs,
   onSpinEnd,
 }: WheelRingProps): ReactNode {
   const sliceCount = items.length;
   const sliceAngle = 360 / sliceCount;
-  const midRadius = (innerRadius + outerRadius) / 2;
-
+  const halfSliceAngle = sliceAngle / 2;
+  const labelRadius = innerRadius + labelInsetFromInner;
   const durationSec = spinDurationMs / 1000;
 
-  return (
-    <motion.g
-      initial={false}
-      animate={{ rotate: rotation }}
-      transition={{
-        duration: durationSec,
-        ease: durationSec > 0 ? [0.17, 0.67, 0.16, 1] : "linear",
-      }}
-      onAnimationComplete={onSpinEnd}
-      style={{ transformOrigin: "center", transformBox: "fill-box" }}
-    >
-      {items.map((item, i) => {
-        const startAngle = i * sliceAngle;
-        const endAngle = (i + 1) * sliceAngle;
-        const midAngle = startAngle + sliceAngle / 2;
-        const path = annularSectorPath(
-          innerRadius,
-          outerRadius,
-          startAngle,
-          endAngle,
-        );
-        const flip = midAngle > 90 && midAngle < 270;
-        const labelOffsetFromMid = fontSize * 0.7;
+  // Image bounding box in the slice's local (rotated) frame, where the slice is
+  // centered at 12 o'clock spanning -halfSliceAngle..+halfSliceAngle.
+  const halfArcRad = (halfSliceAngle * Math.PI) / 180;
+  const imageX = -outerRadius * Math.sin(halfArcRad);
+  const imageY = -outerRadius;
+  const imageWidth = 2 * outerRadius * Math.sin(halfArcRad);
+  const imageHeight = outerRadius - innerRadius;
 
-        return (
-          <g key={item.id}>
-            <path
-              d={path}
-              fill={item.color}
-              stroke="#a07a32"
-              strokeWidth={1.5}
-              opacity={0.9}
-            />
-            <g transform={`rotate(${midAngle}) translate(0 ${-midRadius})`}>
-              <g transform={flip ? "rotate(180)" : ""}>
-                <text
-                  x={0}
-                  y={-glyphSize * 0.6}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={glyphSize}
-                  fill="#f6e4b3"
-                  style={{ userSelect: "none" }}
+  // One reusable clip for all slices of this ring. When referenced from inside a
+  // `rotate(midAngle)` group, the clip applies in the rotated frame and crops
+  // the image to the actual wedge shape.
+  const sliceClipId = `slice-clip-${ringId}`;
+  const sliceClipPath = annularSectorPath(
+    innerRadius,
+    outerRadius,
+    -halfSliceAngle,
+    halfSliceAngle,
+  );
+
+  return (
+    <>
+      <defs>
+        <clipPath id={sliceClipId}>
+          <path d={sliceClipPath} />
+        </clipPath>
+        <radialGradient id={`label-shade-${ringId}`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="60%" stopColor="rgba(0,0,0,0)" />
+          <stop offset="100%" stopColor="rgba(0,0,0,0.55)" />
+        </radialGradient>
+      </defs>
+      <motion.g
+        initial={false}
+        animate={{ rotate: rotation }}
+        transition={{
+          duration: durationSec,
+          ease: durationSec > 0 ? [0.17, 0.67, 0.16, 1] : "linear",
+        }}
+        onAnimationComplete={onSpinEnd}
+        style={{ transformOrigin: "center", transformBox: "fill-box" }}
+      >
+        {items.map((item, i) => {
+          const startAngle = i * sliceAngle;
+          const endAngle = (i + 1) * sliceAngle;
+          const midAngle = startAngle + halfSliceAngle;
+          const slicePath = annularSectorPath(
+            innerRadius,
+            outerRadius,
+            startAngle,
+            endAngle,
+          );
+          const flipForReading = midAngle > 90 && midAngle < 270;
+
+          return (
+            <g key={item.id}>
+              <g transform={`rotate(${midAngle})`}>
+                <g clipPath={`url(#${sliceClipId})`}>
+                  <image
+                    href={item.iconSrc}
+                    x={imageX}
+                    y={imageY}
+                    width={imageWidth}
+                    height={imageHeight}
+                    preserveAspectRatio="xMidYMid slice"
+                  />
+                  {/* Dark gradient at the inner edge so the label stays legible. */}
+                  <rect
+                    x={imageX}
+                    y={-innerRadius - imageHeight * 0.35}
+                    width={imageWidth}
+                    height={imageHeight * 0.35}
+                    fill={`url(#label-shade-${ringId})`}
+                  />
+                </g>
+                <g
+                  transform={
+                    flipForReading ? `rotate(180 0 ${-labelRadius})` : ""
+                  }
                 >
-                  {item.glyph}
-                </text>
-                <text
-                  x={0}
-                  y={labelOffsetFromMid}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={fontSize}
-                  fill="#f6e4b3"
-                  fontWeight={600}
-                  letterSpacing={1}
-                  style={{ userSelect: "none" }}
-                >
-                  {item.label.toUpperCase()}
-                </text>
+                  <text
+                    x={0}
+                    y={-labelRadius}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={labelFontSize}
+                    fill="#f6e4b3"
+                    fontWeight={800}
+                    letterSpacing={1.8}
+                    style={{
+                      userSelect: "none",
+                      paintOrder: "stroke",
+                      stroke: "rgba(0,0,0,0.95)",
+                      strokeWidth: 4,
+                      strokeLinejoin: "round",
+                    }}
+                  >
+                    {item.label.toUpperCase()}
+                  </text>
+                </g>
               </g>
+              {/* Thin gold divider on top of the image. */}
+              <path
+                d={slicePath}
+                fill="none"
+                stroke="#a07a32"
+                strokeWidth={1.5}
+                opacity={0.8}
+              />
             </g>
-          </g>
-        );
-      })}
-      <circle
-        r={innerRadius}
-        cx={0}
-        cy={0}
-        fill="none"
-        stroke="#c39537"
-        strokeWidth={2.5}
-      />
-      <circle
-        r={outerRadius}
-        cx={0}
-        cy={0}
-        fill="none"
-        stroke="#c39537"
-        strokeWidth={2.5}
-      />
-    </motion.g>
+          );
+        })}
+        <circle
+          r={innerRadius}
+          cx={0}
+          cy={0}
+          fill="none"
+          stroke="#c39537"
+          strokeWidth={2.5}
+        />
+        <circle
+          r={outerRadius}
+          cx={0}
+          cy={0}
+          fill="none"
+          stroke="#c39537"
+          strokeWidth={2.5}
+        />
+      </motion.g>
+    </>
   );
 }

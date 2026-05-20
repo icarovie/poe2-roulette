@@ -7,15 +7,19 @@ import { WheelRing } from "./WheelRing";
 import { Pointer } from "./Pointer";
 import { ResultPanel } from "./ResultPanel";
 
-const VIEW_BOX_SIZE = 700;
+const VIEW_BOX_SIZE = 760;
 const HALF = VIEW_BOX_SIZE / 2;
-const OUTER_RING_OUTER = 340;
-const OUTER_RING_INNER = 250;
-const INNER_RING_OUTER = 248;
-const INNER_RING_INNER = 130;
-const CENTER_BUTTON_R = 95;
 
-const SPIN_DURATION_MS = 4500;
+const OUTER_RING_OUTER = 320;
+const OUTER_RING_INNER = 220;
+const INNER_RING_OUTER = 218;
+const INNER_RING_INNER = 95;
+const CENTER_BUTTON_R = 88;
+
+const WHEEL_BORDER_OUTER = 350;
+const WHEEL_BORDER_INNER = 322;
+
+const SPIN_DURATION_MS = 4800;
 
 type Result = {
   classIndex: number;
@@ -102,69 +106,81 @@ export function Roulette(): ReactNode {
     shownResult !== null ? WEAPONS[shownResult.weaponIndex].label : null;
 
   return (
-    <div className="flex w-full flex-col items-center gap-8">
-      <div className="relative aspect-square w-full max-w-[min(85vh,720px)]">
+    <div className="flex w-full flex-col items-center gap-6">
+      <div className="relative aspect-square w-full max-w-[min(82vh,760px)]">
         <svg
           viewBox={`0 0 ${VIEW_BOX_SIZE} ${VIEW_BOX_SIZE}`}
-          className="h-full w-full drop-shadow-[0_10px_30px_rgba(0,0,0,0.6)]"
+          className="h-full w-full drop-shadow-[0_10px_40px_rgba(0,0,0,0.8)]"
           aria-label="Roleta de classes e armas de Path of Exile 2"
         >
           <defs>
             <radialGradient id="wheelBg" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#1d1408" />
-              <stop offset="100%" stopColor="#0a0604" />
+              <stop offset="0%" stopColor="#1c1208" />
+              <stop offset="80%" stopColor="#0b0703" />
+              <stop offset="100%" stopColor="#050300" />
             </radialGradient>
             <radialGradient id="centerBg" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#3a2510" />
-              <stop offset="100%" stopColor="#160a04" />
+              <stop offset="0%" stopColor="#3a2410" />
+              <stop offset="70%" stopColor="#180c04" />
+              <stop offset="100%" stopColor="#0a0502" />
+            </radialGradient>
+            <radialGradient id="borderBg" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#2a1a08" />
+              <stop offset="100%" stopColor="#100802" />
             </radialGradient>
           </defs>
 
           <g transform={`translate(${HALF} ${HALF})`}>
+            <circle r={WHEEL_BORDER_OUTER} fill="url(#borderBg)" />
             <circle
-              r={OUTER_RING_OUTER + 22}
-              fill="url(#wheelBg)"
-              stroke="#5a3a18"
-              strokeWidth={4}
+              r={WHEEL_BORDER_OUTER}
+              fill="none"
+              stroke="#c39537"
+              strokeWidth={3}
             />
             <circle
-              r={OUTER_RING_OUTER + 14}
+              r={WHEEL_BORDER_INNER}
               fill="none"
               stroke="#c39537"
               strokeWidth={3}
             />
 
+            <circle r={OUTER_RING_OUTER} fill="url(#wheelBg)" />
+
             <WheelRing
+              ringId="weapons"
               items={WEAPONS}
               innerRadius={OUTER_RING_INNER}
               outerRadius={OUTER_RING_OUTER}
               rotation={weaponRotation}
-              fontSize={14}
-              glyphSize={22}
+              labelFontSize={13}
+              labelInsetFromInner={16}
               spinDurationMs={currentDuration}
               onSpinEnd={spinning ? handleRingArrived : undefined}
             />
 
             <WheelRing
+              ringId="classes"
               items={CLASSES}
               innerRadius={INNER_RING_INNER}
               outerRadius={INNER_RING_OUTER}
               rotation={classRotation}
-              fontSize={15}
-              glyphSize={28}
+              labelFontSize={15}
+              labelInsetFromInner={18}
               spinDurationMs={currentDuration}
               onSpinEnd={spinning ? handleRingArrived : undefined}
             />
 
+            <circle r={CENTER_BUTTON_R + 8} fill="#0a0502" />
             <circle
-              r={CENTER_BUTTON_R + 6}
+              r={CENTER_BUTTON_R + 8}
               fill="none"
               stroke="#c39537"
               strokeWidth={3}
             />
             <circle r={CENTER_BUTTON_R} fill="url(#centerBg)" />
 
-            <Pointer outerRadius={OUTER_RING_OUTER + 14} />
+            <Pointer wheelBorderRadius={WHEEL_BORDER_OUTER} />
           </g>
         </svg>
 
@@ -172,7 +188,7 @@ export function Roulette(): ReactNode {
           type="button"
           onClick={() => handleSpin(false)}
           disabled={spinning}
-          className="absolute left-1/2 top-1/2 z-10 flex h-[26%] w-[26%] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-4 border-amber-600/80 bg-gradient-to-b from-stone-800 to-stone-950 font-serif text-2xl md:text-3xl font-bold uppercase tracking-[0.25em] text-amber-300 shadow-[inset_0_2px_8px_rgba(255,200,100,0.2),0_4px_20px_rgba(0,0,0,0.7)] transition hover:from-stone-700 hover:to-stone-900 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-70"
+          className="font-serif-display absolute left-1/2 top-1/2 z-10 flex h-[23%] w-[23%] -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-[3px] border-amber-600/90 bg-gradient-to-b from-stone-800 to-stone-950 text-3xl md:text-4xl font-extrabold uppercase tracking-[0.18em] text-amber-300 shadow-[inset_0_2px_10px_rgba(255,200,100,0.25),0_6px_24px_rgba(0,0,0,0.8)] transition hover:from-stone-700 hover:to-stone-900 hover:text-amber-100 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
           aria-label="Girar a roleta"
         >
           {spinning ? "..." : "Girar"}
@@ -184,12 +200,12 @@ export function Roulette(): ReactNode {
           type="button"
           onClick={() => handleSpin(true)}
           disabled={spinning}
-          className="flex h-16 w-16 shrink-0 cursor-pointer flex-col items-center justify-center rounded-xl border border-amber-700/60 bg-stone-900/80 text-[10px] uppercase tracking-widest text-amber-200/80 shadow-lg transition hover:border-amber-500 hover:text-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-20 w-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border border-amber-700/60 bg-stone-900/80 text-[10px] uppercase tracking-widest text-amber-200/80 shadow-lg transition hover:border-amber-500 hover:text-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Sortear aleatoriamente sem animação"
           title="Sortear sem animação"
         >
-          <span className="text-2xl">⚄</span>
-          <span className="mt-0.5">Aleatório</span>
+          <span className="text-2xl leading-none">⚄</span>
+          <span className="leading-none">Aleatório</span>
         </button>
 
         <ResultPanel className={resultClass} weapon={resultWeapon} />
@@ -198,11 +214,11 @@ export function Roulette(): ReactNode {
           type="button"
           onClick={() => handleSpin(false)}
           disabled={spinning}
-          className="flex h-16 w-16 shrink-0 cursor-pointer flex-col items-center justify-center rounded-xl border border-amber-700/60 bg-stone-900/80 text-[10px] uppercase tracking-widest text-amber-200/80 shadow-lg transition hover:border-amber-500 hover:text-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-20 w-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-xl border border-amber-700/60 bg-stone-900/80 text-[10px] uppercase tracking-widest text-amber-200/80 shadow-lg transition hover:border-amber-500 hover:text-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Girar a roleta"
         >
-          <span className="text-2xl">⟳</span>
-          <span className="mt-0.5">Girar</span>
+          <span className="text-2xl leading-none">⟳</span>
+          <span className="leading-none">Girar</span>
         </button>
       </div>
     </div>
